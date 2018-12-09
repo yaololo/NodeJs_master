@@ -37,16 +37,36 @@ var server = http.createServer(function(req, res){
   req.on('end', function(){
     buffer += decoder.end();
 
-    // Send the response
-    res.end('hello world\n');
+    // Choose the handler this request should go to, use notFound handler to handle unmatched handler
+    var chosenHandler = typeof(router[trimmedPath]) !== 'undefined' ? router[trimmedPath] : handlers.notFound;
 
-    // Log the request path
-    console.log('Request is received on path: ' + trimmedPath + ' with method ' + method +
-      ' and with this query string parameters ', queryStringObject);
+    // Construct data object to send to handler
+    var data = {
+      'trimmedPath' : trimmedPath,
+      'queryStringObject': queryStringObject,
+      'method': method,
+      'headers': headers,
+      'payload': buffer
+    }
 
-    console.log('Request with these headers ', headers);
+    // Route the quest to the handler specified in the router
+    chosenHandler(data, function(statusCode, payload){
+      // use the statusCode called back by the handler, or default to 200
+      statusCode = typeof(statusCode) == 'number' ? statusCode : 200;
 
-    console.log('Payload: ', buffer);
+      // User the payload called back by handler, or defualt empty object
+      payload = typeof(payload) == 'object' ? payload : {};
+
+      // Convert the payload to a string
+      var payloadString = JSON.stringify(payload);
+
+      // Return the response
+      res.writeHead(statusCode);
+      res.end(payloadString);
+
+      // Log the request path
+      console.log('Returning this response:', statusCode, payloadString,)
+    })
   })
 })
 
@@ -55,3 +75,19 @@ server.listen(3000, function(){
   console.log('Teh server is listening on port 3000 now');
 })
 
+// Define handlers
+var handlers = {};
+handlers.sample = function(data, callback){
+
+  callback(406, {'name': 'sample handler'});
+
+}
+
+handlers.notFound = function(data, callback){
+  callback(404);
+}
+
+// Define a request router
+var router = {
+  'sample': handlers.sample
+}
