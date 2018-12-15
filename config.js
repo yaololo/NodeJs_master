@@ -9,7 +9,7 @@ var envrionments = {};
 // Staging(default) object
 envrionments.staging = {
   'httpPort' : 3000,
-  'httpsd': 3001,
+  'httpsPort': 3001,
   'envName': 'staging'
 };
 

@@ -7,10 +7,17 @@ const url = require('url');
 const StringDecoder = require('string_decoder').StringDecoder;
 const config = require('./config');
 const fs = require('fs');
+const _data = require('./lib/data')
+
+
+// Testing
+_data.update('test', 'newFile1', { 'fizz': 'buzz' }, function(err, data){
+  console.log('this was the erorr', err);
+} )
 
 // Instantiate the HTTP server
 var httpServer = http.createServer(function(req, res){
-  undefined(req, res);
+  unifiedServer(req, res);
 })
 
 // Start the server
@@ -21,9 +28,10 @@ httpServer.listen(config.httpPort, function(){
 // Instantiate the HTTPS server
 var httpsServerOptions = {
   // get the key and cert synchronously so the data of the file can be the key and certificte
-  'key': fs.readFileSync('./https/key.pem'),
-  'cert': fs.readFileSync('./https/cert.pem')
+  'key' : fs.readFileSync('./https/key.pem'),
+  'cert' : fs.readFileSync('./https/cert.pem')
 };
+
 var httpsServer = https.createServer(httpsServerOptions, function(req, res){
   unifiedServer(req. res);
 })
@@ -32,9 +40,9 @@ httpsServer.listen(config.httpsServer, function(){
   console.log(`HTTPS server is listening on port ${config.httpsPort} in ${config.envName} mode`)
 })
 
-
 // All the server logic for both http and https server
 var unifiedServer = function(req, res){
+
   // Get the url and parse it
   var parsedUrl = url.parse(req.url, true);
 
@@ -59,7 +67,6 @@ var unifiedServer = function(req, res){
   req.on('data', function(data){
     buffer += decoder.write(data);
   })
-
 
   req.on('end', function(){
     buffer += decoder.end();
@@ -100,8 +107,9 @@ var unifiedServer = function(req, res){
 
 // Define handlers
 var handlers = {};
-handlers.sample = function(data, callback){
-  callback(406, {'name': 'sample handler'});
+
+handlers.ping = function (data, callback){
+  callback(200);
 }
 
 handlers.notFound = function(data, callback){
@@ -110,5 +118,5 @@ handlers.notFound = function(data, callback){
 
 // Define a request router
 var router = {
-  'sample': handlers.sample
+  'ping': handlers.ping
 }
