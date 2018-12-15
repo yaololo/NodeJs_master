@@ -7,13 +7,6 @@ const url = require('url');
 const StringDecoder = require('string_decoder').StringDecoder;
 const config = require('./config');
 const fs = require('fs');
-const _data = require('./lib/data')
-
-
-// Testing
-_data.update('test', 'newFile1', { 'fizz': 'buzz' }, function(err, data){
-  console.log('this was the erorr', err);
-} )
 
 // Instantiate the HTTP server
 var httpServer = http.createServer(function(req, res){
