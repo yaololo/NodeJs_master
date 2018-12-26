@@ -11,7 +11,7 @@ const handlers = require('./lib/handler');
 const helpers = require('./lib/helpers');
 
 // Instantiate the HTTP server
-var httpServer = http.createServer(function(req, res){
+let httpServer = http.createServer(function(req, res){
   unifiedServer(req, res);
 })
 
@@ -21,13 +21,13 @@ httpServer.listen(config.httpPort, function(){
 })
 
 // Instantiate the HTTPS server
-var httpsServerOptions = {
+let httpsServerOptions = {
   // get the key and cert synchronously so the data of the file can be the key and certificte
   'key' : fs.readFileSync('./https/key.pem'),
   'cert' : fs.readFileSync('./https/cert.pem')
 };
 
-var httpsServer = https.createServer(httpsServerOptions, function(req, res){
+let httpsServer = https.createServer(httpsServerOptions, function(req, res){
   unifiedServer(req. res);
 })
 
@@ -36,41 +36,41 @@ httpsServer.listen(config.httpsServer, function(){
 })
 
 // All the server logic for both http and https server
-var unifiedServer = function(req, res){
+let unifiedServer = function(req, res){
 
   // Get the url and parse it
-  var parsedUrl = url.parse(req.url, true);
+  let parsedUrl = url.parse(req.url, true);
 
   // Get the path (untrim the path by using pathname)
-  var path = parsedUrl.pathname;
-  var trimmedPath = path.replace(/^\/+|\/+$/g, '');
+  let path = parsedUrl.pathname;
+  let trimmedPath = path.replace(/^\/+|\/+$/g, '');
 
   // Get the query string as an object
-  var queryStringObject = parsedUrl.query
+  let queryStringObject = parsedUrl.query
 
   // Get the HTTP Method
-  var method = req.method.toLowerCase();
+  let method = req.method.toLowerCase();
 
   // Get the header as an object
-  var headers = req.headers;
+  let headers = req.headers;
 
   // Get the payload, if any
-  var decoder = new StringDecoder('utf-8');
-  var buffer = '';
+  let decoder = new StringDecoder('utf-8');
+  let buffer = '';
 
   // As data stream in, the req object emits data event that binds to a callback
   req.on('data', function(data){
     buffer += decoder.write(data);
   })
 
-  req.on('end', function(){
+  req.on('end', async function(){
     buffer += decoder.end();
 
     // Choose the handler this request should go to, use notFound handler to handle unmatched handler
-    var chosenHandler = typeof(router[trimmedPath]) !== 'undefined' ? router[trimmedPath] : handlers.notFound;
+    let chosenHandler = typeof(router[trimmedPath]) !== 'undefined' ? router[trimmedPath] : handlers.notFound;
 
     // Construct data object to send to handler
-    var data = {
+    let data = {
       'trimmedPath' : trimmedPath,
       'queryStringObject': queryStringObject,
       'method': method,
@@ -79,30 +79,22 @@ var unifiedServer = function(req, res){
     }
 
     // Route the quest to the handler specified in the router
-    chosenHandler(data, function(statusCode, payload){
-      // use the statusCode called back by the handler, or default to 200
-      statusCode = typeof(statusCode) == 'number' ? statusCode : 200;
+    let returnObj = await chosenHandler(data);
+    let statusCode = typeof(returnObj.statusCode) == 'number' ? returnObj.statusCode : 200;
+    let payload = typeof(returnObj.payload) == 'object' ? returnObj.payload : {};
+    let payloadString = JSON.stringify(payload);
 
-      // User the payload called back by handler, or defualt empty object
-      payload = typeof(payload) == 'object' ? payload : {};
+    res.writeHead(statusCode);
+    res.end(payloadString);
 
-      // Convert the payload to a string
-      var payloadString = JSON.stringify(payload);
-
-      // Return the response
-      // res.setHeader('Contnent-type', 'application/json');
-      res.writeHead(statusCode);
-      res.end(payloadString);
-
-      // Log the request path
-      console.log('Returning this response:', statusCode, payloadString,)
-    })
+    // Log the request path
+    console.log('Returning this response:', statusCode, payloadString);
   })
 }
 
 
 // Define a request router
-var router = {
+let router = {
   'ping': handlers.ping,
   'users': handlers.users,
   'tokens': handlers.tokens,
