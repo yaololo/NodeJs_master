@@ -80,7 +80,7 @@ let unifiedServer = function(req, res){
 
     // Route the quest to the handler specified in the router
     let returnObj = await chosenHandler(data);
-    let statusCode = typeof(returnObj.statusCode) == 'number' ? returnObj.statusCode : 200;
+    let statusCode = typeof(returnObj.statusCode) == 'number' ? returnObj.statusCode : 500;
     let payload = typeof(returnObj.payload) == 'object' ? returnObj.payload : {};
     let payloadString = JSON.stringify(payload);
 
